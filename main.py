@@ -1,10 +1,16 @@
+# Python Libraries
+import sys
+
+#Adding /lib to the path
+sys.path.append('/lib')
+
 # Micropython Libraries
 from machine import Pin, I2C
 from time import sleep
 
 # Local Libraries
-from lib.sr74hc595n import Sr74hc595n
-from lib.i2c_lcd.pico_i2c_lcd import I2cLcd
+from sr74hc595n import Sr74hc595n
+from i2c_lcd.pico_i2c_lcd import I2cLcd
 
 # Setting up shift register
 # Pins for the Shift Register
@@ -28,8 +34,8 @@ def main():
     going_up = True
     while True:
         lcd.clear()
+        lcd.putstr(str(sys.path))
         sr.write(number)
-        lcd.putstr(f'Writing: {number} \n{bin(number)}')
         sleep(0.2)
         if going_up:
             number = number * 2
