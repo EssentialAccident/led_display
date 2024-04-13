@@ -43,6 +43,9 @@ class Sr74hc595n:
         # The display will be always initialized full brightness
         self.brightness(100)
 
+        # It will store the data
+        self.bin_data = 0
+
         # Set up the register
         self.clear_register()
 
@@ -69,6 +72,7 @@ class Sr74hc595n:
         
 
     def write(self, data: int) -> None:
+        self.bin_data = data
         for i in range(self.num_registers * 8):
             bit = (data >> i) & 1
             self.data.value(bit)
