@@ -7,8 +7,6 @@
 from machine import Pin, PWM
 from time import sleep
 
-SLEEP_TIME = 0
-
 class Sr74hc595n:
     def __init__(self, data: int, clock: int, latch: int, clear: int, out_enable: int , num_registers: int = 1) -> None:
         # self.data:        Data pin for the Shift Register
@@ -55,6 +53,7 @@ class Sr74hc595n:
         self.clear_register.off()
         self.clear_register.on()
         self.__pulse_latch()
+        self.bin_data = 0
 
     def brightness(self, percent: int) -> None:
         # The duty cycle of the PWM is a range from 0 to 65535
@@ -70,15 +69,23 @@ class Sr74hc595n:
         self.latch.on()
         self.latch.off()
         
-
     def write(self, data: int) -> None:
         self.bin_data = data
         for i in range(self.num_registers * 8):
-            bit = (data >> i) & 1
+            bit = (self.bin_data >> i) & 1
             self.data.value(bit)
             self.__pulse_clock()
         self.__pulse_latch()
-    
+
+    def change_pin(self, pin: int, value: bool) -> None:
+        if value:
+            mask = 1 << (pin - 1)
+            self.bin_data = self.bin_data | mask
+        elif not value:
+            mask = ~(1 << (pin - 1))
+            self.bin_data = self.bin_data & mask
+        self.write(self.bin_data)
+        
     def deinit(self) -> None:
         self.clear()
         self.pwm_output.deinit()
