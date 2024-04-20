@@ -8,7 +8,7 @@ from machine import Pin, PWM
 from time import sleep
 
 class Sr74hc595n:
-    def __init__(self, data: int, clock: int, latch: int, clear: int, out_enable: int , num_registers: int = 1) -> None:
+    def __init__(self, data: int, clock: int, latch: int, clear: int, out_enable: int , num_registers: int = 1, inverse: bool = False) -> None:
         # self.data:        Data pin for the Shift Register
         # self.clock:       Clock to shift the register.
         #                   Shifts on the rising edge of the clock
@@ -28,6 +28,10 @@ class Sr74hc595n:
         self.clear_register = Pin(clear, Pin.OUT)
         self.num_registers = num_registers
 
+        # Setting properties
+        self.inverse = inverse
+        self.bin_data = 0 # Stores the data in the Shift Register
+
         # Setting the initial states of the Shift Register pins
         self.data.off()
         self.clock.off()
@@ -41,19 +45,21 @@ class Sr74hc595n:
         # The display will be always initialized full brightness
         self.brightness(100)
 
-        # It will store the data
-        self.bin_data = 0
-
         # Set up the register
         self.clear_register()
 
 
     def clear(self) -> None:
         # It clears the shift register
-        self.clear_register.off()
-        self.clear_register.on()
-        self.__pulse_latch()
-        self.bin_data = 0
+        # If the register is not inverse
+        if not self.inverse:
+            self.clear_register.off()
+            self.clear_register.on()
+            self.__pulse_latch()
+            self.bin_data = 0
+        elif self.inverse:
+            self.bin_data = (2 ** (self.num_registers * 8)) - 1
+            self.write(self.bin_data)
 
     def brightness(self, percent: int) -> None:
         # The duty cycle of the PWM is a range from 0 to 65535
