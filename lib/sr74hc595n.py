@@ -37,10 +37,11 @@ class Sr74hc595n:
         self.latch = Pin(latch, Pin.OUT)
         self.clear_register = Pin(clear, Pin.OUT)
         self.num_registers = num_registers
+        self.num_pins = self.num_registers * 8
 
         # Setting properties
         self.inverse = inverse
-        self.bin_data = 0  # Stores the data in the Shift Register
+        self.bin_data = []  # Stores the data in the Shift Register
 
         # Setting the initial states of the Shift Register pins
         self.data.off()
@@ -56,7 +57,7 @@ class Sr74hc595n:
         self.brightness(100)
 
         # Set up the register
-        self.clear_register()
+        self.clear()
 
     def clear(self) -> None:
         # It clears the shift register
@@ -65,9 +66,9 @@ class Sr74hc595n:
             self.clear_register.off()
             self.clear_register.on()
             self.__pulse_latch()
-            self.bin_data = 0
+            self.bin_data = [0] * self.num_pins
         elif self.inverse:
-            self.bin_data = (2 ** (self.num_registers * 8)) - 1
+            self.bin_data = [1] * self.num_pins
             self.write(self.bin_data)
 
     def brightness(self, percent: int) -> None:
@@ -84,21 +85,25 @@ class Sr74hc595n:
         self.latch.on()
         self.latch.off()
 
-    def write(self, data: int) -> None:
+    def write(self, data: list) -> None:
         self.bin_data = data
-        for i in range(self.num_registers * 8):
-            bit = (self.bin_data >> i) & 1
+        for bit in self.bin_data:
             self.data.value(bit)
             self.__pulse_clock()
         self.__pulse_latch()
 
     def change_pin(self, pin: int, value: bool) -> None:
         if value:
-            mask = 1 << (pin - 1)
-            self.bin_data = self.bin_data | mask
+            self.bin_data[pin] = 1
         elif not value:
-            mask = ~(1 << (pin - 1))
-            self.bin_data = self.bin_data & mask
+            self.bin_data[pin] = 0
+        self.write(self.bin_data)
+
+    def toggle_pin(self, pin: int) -> None:
+        if self.bin_data[pin] == 1:
+            self.bin_data[pin] = 0
+        else:
+            self.bin_data[pin] = 1
         self.write(self.bin_data)
 
     def deinit(self) -> None:
