@@ -1,26 +1,36 @@
 #################################################
 # Wrapper class for the Shift Register 74HC595N #
 # Lino Oropeza                                  #
-# 2024                                          #      
+# 2024                                          #
 #################################################
 
 from machine import Pin, PWM
 from time import sleep
 
+
 class Sr74hc595n:
-    def __init__(self, data: int, clock: int, latch: int, clear: int, out_enable: int , num_registers: int = 1, inverse: bool = False) -> None:
-        # self.data:        Data pin for the Shift Register
-        # self.clock:       Clock to shift the register.
-        #                   Shifts on the rising edge of the clock
-        # self.latch:       It stores the data on the register
-        # self.clear:       Sets all the register to 0
-        #                   It clears the register when pulled low
-        #                   For the normal operation of the register, 
-        #                   it has to be pulled high
-        # self.out_enable:  It disables the outputs of the shift register
-        #                   when pulled low.
-        #                   It will be configured as a PWM pin.
-        
+    # self.data:        Data pin for the Shift Register
+    # self.clock:       Clock to shift the register.
+    #                   Shifts on the rising edge of the clock
+    # self.latch:       It stores the data on the register
+    # self.clear:       Sets all the register to 0
+    #                   It clears the register when pulled low
+    #                   For the normal operation of the register,
+    #                   it has to be pulled high
+    # self.out_enable:  It disables the outputs of the shift register
+    #                   when pulled low.
+    #                   It will be configured as a PWM pin.
+    def __init__(
+        self,
+        data: int,
+        clock: int,
+        latch: int,
+        clear: int,
+        out_enable: int,
+        num_registers: int = 1,
+        inverse: bool = False,
+    ) -> None:
+
         # Creating pins
         self.data = Pin(data, Pin.OUT)
         self.clock = Pin(clock, Pin.OUT)
@@ -30,24 +40,23 @@ class Sr74hc595n:
 
         # Setting properties
         self.inverse = inverse
-        self.bin_data = 0 # Stores the data in the Shift Register
+        self.bin_data = 0  # Stores the data in the Shift Register
 
         # Setting the initial states of the Shift Register pins
         self.data.off()
         self.clock.off()
         self.latch.off()
         self.clear_register.on()
-        
+
         # The output enable pin will be setup as PWM
         self.pwm_freq = 5000
         pin_out_enable = Pin(out_enable, Pin.OUT)
-        self.pwm_output = PWM(pin_out_enable, freq=self.pwm_freq, invert=True)       
+        self.pwm_output = PWM(pin_out_enable, freq=self.pwm_freq, invert=True)
         # The display will be always initialized full brightness
         self.brightness(100)
 
         # Set up the register
         self.clear_register()
-
 
     def clear(self) -> None:
         # It clears the shift register
@@ -74,7 +83,7 @@ class Sr74hc595n:
     def __pulse_latch(self) -> None:
         self.latch.on()
         self.latch.off()
-        
+
     def write(self, data: int) -> None:
         self.bin_data = data
         for i in range(self.num_registers * 8):
@@ -91,8 +100,7 @@ class Sr74hc595n:
             mask = ~(1 << (pin - 1))
             self.bin_data = self.bin_data & mask
         self.write(self.bin_data)
-        
+
     def deinit(self) -> None:
         self.clear()
         self.pwm_output.deinit()
-
